@@ -161,33 +161,6 @@ class MyWindow(Gtk.Window):
         vbox1.pack_start(self.fileButtonAir, False, False, 0)
 
         frame = Gtk.Frame();
-        frame.set_label("Adobe Air wrapper")
-        vbox1 = Gtk.Box(orientation='vertical',spacing=6)
-        frame.add(vbox1)
-        vbox.pack_start(frame, False, False, 0)
-
-        hbox = Gtk.Box(spacing=6)
-        vbox1.pack_start(hbox, False, False, 0)
-
-        self.airWrapperFromNet = Gtk.RadioButton.new_with_label_from_widget(None, "Scarica dalla rete")
-        self.airWrapperFromNet.connect("toggled", self.on_air_wrapper_button_toggled)
-        hbox.pack_start(self.airWrapperFromNet, False, False, 0)
-
-        airWrapperFromDisk = Gtk.RadioButton.new_with_label_from_widget(self.airWrapperFromNet,"Installa da file")
-        # airFromDisk.connect("toggled", self.on_button_toggled, "2")
-        hbox.pack_start(airWrapperFromDisk, False, False, 0)
-
-        filter = Gtk.FileFilter()
-        filter.set_name("tar.gz files")
-        filter.add_pattern("*.tar.gz")
-        self.fileButtonAirWrapper = Gtk.FileChooserButton ();
-        self.fileButtonAirWrapper.set_title("Seleziona il wrapper di Adobe Air")
-        self.fileButtonAirWrapper.add_filter(filter)
-        self.fileButtonAirWrapper.set_current_folder(self.tempdir)
-        self.fileButtonAirWrapper.set_sensitive(False)
-        vbox1.pack_start(self.fileButtonAirWrapper, False, False, 0)
-
-        frame = Gtk.Frame();
         frame.set_label("Scratch 2.0")
         vbox1 = Gtk.Box(orientation='vertical',spacing=6)
         frame.add(vbox1)
@@ -228,9 +201,6 @@ class MyWindow(Gtk.Window):
 
     def on_air_button_toggled (self, button):
         self.fileButtonAir.set_sensitive(not button.get_active())
-
-    def on_air_wrapper_button_toggled (self, button):
-        self.fileButtonAirWrapper.set_sensitive(not button.get_active())
 
     def on_scratch_button_toggled (self, button):
         self.fileButtonScratch.set_sensitive(not button.get_active())
@@ -345,21 +315,6 @@ class MyWindow(Gtk.Window):
                 GLib.idle_add(self.show_action_message, "Installo Air dal file" + self.air_installer_file)
         return True
 
-    def get_air_wrapper(self):
-        if self.airWrapperFromNet.get_active():
-            if not self.create_scratch_downoad_directory():
-                return False
-            self.air_wrapper_installer_file = self.tempdir + "/adobe-air.tar.gz"
-            return self.download_file("http://airdownload.adobe.com/air/lin/download/2.6/adobe-air.tar.gz" ,self.air_wrapper_installer_file ,"Scarico il wrapper di Adobe Air dalla rete")
-        else:
-            self.air_wrapper_installer_file = self.fileButtonAirWrapper.get_filename()
-            if self.air_wrapper_installer_file == None:
-                GLib.idle_add(self.error_message, "Non hai scelto il file con il pacchetto AIR di Scratch")
-                return False
-            else:
-                GLib.idle_add(self.show_action_message, "Installo Air dal file" + self.air_wrapper_installer_file)
-        return True
-
     def get_scratch_installer(self):
         if self.scratchFromNet.get_active():
             # message = self.get_url("https://scratch.mit.edu/scratchr2/static/sa/version.xml", "Cerco la versione di scratch")
@@ -391,7 +346,7 @@ class MyWindow(Gtk.Window):
         GLib.idle_add(self.append_action_message, "Lancio la sessione in area privilegiata")
         print ("Avvio l'installazione con pkexec")
         # import pdb; pdb.set_trace()
-        inst = subprocess.Popen(['/usr/bin/pkexec', os.path.realpath(__file__), '--root-action', '--air-installer=' + self.air_installer_file, '--air-wrapper=' + self.air_wrapper_installer_file, '--scratch2-installer=' + self.scrathFile,
+        inst = subprocess.Popen(['/usr/bin/pkexec', os.path.realpath(__file__), '--root-action', '--air-installer=' + self.air_installer_file, '--scratch2-installer=' + self.scrathFile,
             "--xauthority=" + os.environ['XAUTHORITY'] ], stdout=subprocess.PIPE ,stderr=subprocess.STDOUT)
         while True:
             line = inst.stdout.readline().decode('utf-8')
@@ -419,16 +374,12 @@ class MyWindow(Gtk.Window):
             GLib.idle_add(self.error_message, "Installazione di Adobe Air dal file " + self.air_installer_file + " fallita")
         elif inst.returncode == 6:
             GLib.idle_add(self.error_message, "Installazione di Scratch2 dal file " + self.scrathFile + " fallita")
-        elif inst.returncode == 7:
-            GLib.idle_add(self.error_message, "Il file di Adobe Air wrapper" + self.air_wrapper_installer_file + " non esiste o non è leggibile")
-        elif inst.returncode == 8:
-            GLib.idle_add(self.error_message, "Installazione di Adobe Air wrapper dal file " + self.air_wrapper_installer_file + " fallita")
         else:
             GLib.idle_add(self.error_message, "Installazione terminata corettamente", True)
         return inst.returncode == 0
 
     def install(self):
-        if self.get_air_installer() and self.get_air_wrapper() and self.get_scratch_installer() and self.run_installation():
+        if self.get_air_installer() and self.get_scratch_installer() and self.run_installation():
             Gtk.main_quit()
         GLib.idle_add(self.close_action_message)
         GLib.idle_add(self.button.set_sensitive, True)
@@ -457,18 +408,14 @@ def subprocess_call(command, new_env={}):
     print(command)
     return subprocess.call(shlex.split(command), env=new_env)
 
-def real_install(air_installer, air_wrapper, scratch2_installer, xauthority):
+def real_install(air_installer, scratch2_installer, xauthority):
     if not os.access(air_installer, os.R_OK):
         print("Il file SDK di Adobe Air " + air_installer + " non esiste o non è leggibile")
         sys.exit(1)
-    if not os.access(air_wrapper, os.R_OK):
-        print("Il file di Adobe Air wrapper " + air_installer + " non esiste o non è leggibile")
-        sys.exit(7)
     if not os.access(scratch2_installer, os.R_OK):
         print("Il file di installazione di Scratch2 " + scratch2_installer + " non esiste o non è leggibile")
         sys.exit(2)
     print ("Installer di Air: " + air_installer)
-    print ("Installer di Air wrapper: " + air_wrapper)
     print ("Installer di Scratch: " + scratch2_installer)
     # Rende eseguibile l'installer di Air
     # os.chmod(air_installer, 0o755)
@@ -565,14 +512,6 @@ def real_install(air_installer, air_wrapper, scratch2_installer, xauthority):
     if subprocess_call("/bin/tar jxf " + air_installer + " -C /opt/adobe-air-sdk", environment) != 0:
         print("Installazione di Adobe Air SDK dal file " + air_installer + " fallita")
         sys.exit(5)
-    if subprocess_call("tar xvf " + air_wrapper + " -C /opt/adobe-air-sdk", environment) != 0:
-        print("Installazione di Adobe Air wrapper dal file " + air_installer + " fallita")
-        sys.exit(8)
-    try:
-        os.chmod("/opt/adobe-air-sdk/adobe-air/adobe-air", 0o755)
-    except:
-        print("Installazione di Adobe Air wrapper dal file " + air_installer + " fallita")
-        sys.exit(8)
     os.mkdir("/opt/adobe-air-sdk/scratch")
     # import pdb; pdb.set_trace()
     if subprocess_call( "/usr/bin/unzip -o " + scratch2_installer + " -d /opt/adobe-air-sdk/scratch/", environment) != 0:
@@ -595,7 +534,6 @@ parser = argparse.ArgumentParser(description='Programma di installazione di Scra
 
 parser.add_argument('--root-action', action='store_true', help='Forza la parte di root dello script')
 parser.add_argument('--air-installer', help='Il percorso dell\'installer di Air')
-parser.add_argument('--air-wrapper', help='Il percorso del wrapper di Air')
 parser.add_argument('--scratch2-installer', help='Il percorso dell\'installer di Scratch2')
 parser.add_argument('--xauthority', help='il percorso del file XAYTHORITY per consentire alle applicazioni desktop di funzionare')
 
@@ -609,7 +547,7 @@ if args.root_action:
     if vermsg != None:
         exit(vermsg)
     print ("eseguo la parte di root")
-    real_install(args.air_installer, args.air_wrapper, args.scratch2_installer, args.xauthority)
+    real_install(args.air_installer, args.scratch2_installer, args.xauthority)
 else:
     if __name__ == "__main__":
         win = MyWindow()
