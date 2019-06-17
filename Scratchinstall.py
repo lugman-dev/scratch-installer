@@ -552,6 +552,9 @@ def real_install(air_installer, air_wrapper, scratch2_installer, xauthority):
     environment = { 'DISPLAY':':0', 'XAUTHORITY': xauthority, 'PATH':'/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' }
     subprocess_call("/bin/bash -c env")
     # if subprocess_call("/usr/bin/apt-get -q -y install " + dependencies) != 0:
+    if subprocess_call("/usr/bin/apt-get update") != 0:
+        print("Installazione delle dipendenze fallita")
+        sys.exit(4)
     if subprocess_call("/usr/bin/apt-get -y install " + dependencies) != 0:
         print("Installazione delle dipendenze fallita")
         sys.exit(4)
