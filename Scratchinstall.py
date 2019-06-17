@@ -85,8 +85,8 @@ DESKTOP_FILE = '''[Desktop Entry]
 Type=Application
 Name=Scratch 2
 Comment=Ide visuale per bambini
-Exec=/opt/adobe-air-sdk/adobe-air/adobe-air /opt/adobe-air-sdk/scratch/Scratch-458.0.1.air
-Icon=/opt/adobe-air-sdk/scratch/scratch.png
+Exec=/opt/adobe-air-sdk/bin/adl -nodebug /opt/adobe-air-sdk/scratch/META-INF/AIR/application.xml /opt/adobe-air-sdk/scratch
+Icon=/opt/adobe-air-sdk/scratch/icons/AppIcon128.png
 Terminal=false
 NoDisplay=false
 StartupNotify=true
@@ -572,13 +572,7 @@ def real_install(air_installer, air_wrapper, scratch2_installer, xauthority):
         sys.exit(8)
     os.mkdir("/opt/adobe-air-sdk/scratch")
     # import pdb; pdb.set_trace()
-    if subprocess_call( "/bin/cp " + scratch2_installer + " /opt/adobe-air-sdk/scratch/", environment) != 0:
-        print("Installazione di Scratch2 dal file " + scratch2_installer + " fallita")
-        sys.exit(6)
-    if subprocess_call( "/usr/bin/unzip -o " + scratch2_installer + " -d /tmp/", environment) != 0:
-        print("Installazione di Scratch2 dal file " + scratch2_installer + " fallita")
-        sys.exit(6)
-    if subprocess_call( "/bin/cp /tmp/icons/AppIcon128.png /opt/adobe-air-sdk/scratch/scratch.png", environment) != 0:
+    if subprocess_call( "/usr/bin/unzip -o " + scratch2_installer + " -d /opt/adobe-air-sdk/scratch/", environment) != 0:
         print("Installazione di Scratch2 dal file " + scratch2_installer + " fallita")
         sys.exit(6)
     try:
