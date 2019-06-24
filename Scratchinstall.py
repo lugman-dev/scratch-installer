@@ -506,6 +506,7 @@ def real_install(air_installer, scratch2_installer, xauthority):
         print("Installazione delle dipendenze fallita")
         sys.exit(4)
     # import pdb; pdb.set_trace()
+    os.makedirs("/opt", exist_ok=True)
     if "adobe-air-sdk" in os.listdir("/opt"):
         shutil.rmtree("/opt/adobe-air-sdk")
     os.mkdir("/opt/adobe-air-sdk")
