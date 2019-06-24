@@ -65,18 +65,19 @@
 ## libasound.so
 ##
 
+import argparse
+import errno
 import gi
-import os, errno
+import hashlib
+import os
 import os.path
 import sys
 import threading
 import urllib.request
-import time
 import re
 import shlex
 import shutil
 import subprocess
-import argparse
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gtk, Gdk, GObject
@@ -94,6 +95,10 @@ Categories=Development;
 Keywords=ide;coding;
 MimeType=application/x-scratch-project;
 '''
+
+AIR_SHA256 = "58912fc6797bcbab49de1f4accb4743a72e7b20384bae1babf9242ac88007501"
+SCRATCH_VERSION = "458.0.1"
+SCRATCH_SHA256 = "b48abfae6e29d112986e7870bacd15ba5cbd67c1e28dcec1bc2d7dfe00a5a56d"
 
 class ShowActionDialog(Gtk.Dialog):
     def __init__(self, parent, message):
@@ -274,6 +279,9 @@ class MyWindow(Gtk.Window):
             return False
         return True
 
+    def check_sha256(self, filename, hash):
+        return hashlib.sha256(contents).hexdigest() == hash
+
     def get_url(self, url, basemessage):
         GLib.idle_add(self.show_action_message, basemessage)
         message = "";
@@ -305,13 +313,25 @@ class MyWindow(Gtk.Window):
             if not self.create_scratch_downoad_directory():
                 return False
             self.air_installer_file = self.tempdir + "/AdobeAIRSDK.tbz2"
-            return self.download_file("http://airdownload.adobe.com/air/lin/download/2.6/AdobeAIRSDK.tbz2" ,self.air_installer_file ,"Scarico Adobe Air dalla rete")
+            if not self.download_file("http://airdownload.adobe.com/air/lin/download/2.6/AdobeAIRSDK.tbz2" ,self.air_installer_file ,"Scarico Adobe Air dalla rete")
+                return False
+            Glib.idle_add(self.show_action_message, "Verifica checksum file AIR")
+            if not self.check_sha256(self.scrathFile, SCRATCH_SHA256):
+                Glib.idle_add(self.error_message, "Verifica checksum file AIR: FAIL!")
+                return False
+            Glib.idle_add(self.append_action_message, "Verifica checksum file AIR: OK")
+            return True
         else:
             self.air_installer_file = self.fileButtonAir.get_filename()
             if self.air_installer_file == None:
-                GLib.idle_add(self.error_message, "Non hai scelto il file con il pacchetto AIR di Scratch")
+                GLib.idle_add(self.error_message, "Non hai scelto il file con il file AIR SDK")
                 return False
             else:
+                Glib.idle_add(self.show_action_message, "Verifica checksum file Scratch")
+                if not self.check_sha256(self.scrathFile, SCRATCH_SHA256):
+                    Glib.idle_add(self.error_message, "Verifica checksum file Scratch: FAIL!")
+                    return False
+                Glib.idle_add(self.append_action_message, "Verifica checksum file Scratch: OK")
                 GLib.idle_add(self.show_action_message, "Installo Air dal file" + self.air_installer_file)
         return True
 
@@ -331,13 +351,25 @@ class MyWindow(Gtk.Window):
             # return self.download_file(m.group(2), self.scrathFile,"Scarico Scratch 2 dalla rete")
             GLib.idle_add(self.show_action_message, "Installo la versione 458 Di Scratch 2")
             self.scrathFile = self.tempdir + "/Scratch-458.0.1.air"
-            return self.download_file("https://scratch.mit.edu/scratchr2/static/sa/Scratch-458.0.1.air", self.scrathFile, "Scarico Scratch 2 dalla rete")
+            if not self.download_file("https://scratch.mit.edu/scratchr2/static/sa/Scratch-458.0.1.air", self.scrathFile, "Scarico Scratch 2 dalla rete"):
+                return False
+            Glib.idle_add(self.show_action_message, "Verifica checksum file Scratch")
+            if not self.check_sha256(self.scrathFile, SCRATCH_SHA256):
+                Glib.idle_add(self.error_message, "Verifica checksum file Scratch: FAIL!")
+                return False
+            Glib.idle_add(self.append_action_message, "Verifica checksum file Scratch: OK")
+            return True
         else:
             self.scrathFile = self.fileButtonScratch.get_filename()
             if self.scrathFile == None:
                 GLib.idle_add(self.error_message, "Non hai scelto il file con il pacchetto AIR di Scratch")
                 return False
             else:
+                Glib.idle_add(self.show_action_message, "Verifica checksum file Scratch")
+                if not self.check_sha256(self.scrathFile, SCRATCH_SHA256):
+                    Glib.idle_add(self.error_message, "Verifica checksum file Scratch: FAIL!")
+                    return False
+                Glib.idle_add(self.append_action_message, "Verifica checksum file Scratch: OK")
                 GLib.idle_add(self.show_action_message, "Installo Scratch2 dal file" + self.scrathFile)
         return True
 
