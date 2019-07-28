@@ -311,7 +311,7 @@ class MyWindow(Gtk.Window):
             if not self.create_scratch_downoad_directory():
                 return False
             self.air_installer_file = self.tempdir + "/AdobeAIRSDK.tbz2"
-            if not self.download_file("http://airdownload.adobe.com/air/lin/download/2.6/AdobeAIRSDK.tbz2" ,self.air_installer_file ,"Scarico Adobe Air dalla rete")
+            if not self.download_file("http://airdownload.adobe.com/air/lin/download/2.6/AdobeAIRSDK.tbz2" ,self.air_installer_file ,"Scarico Adobe Air dalla rete"):
                 return False
             Glib.idle_add(self.show_action_message, "Verifica checksum file AIR")
             if not self.check_sha256(self.scrathFile, SCRATCH_SHA256):
